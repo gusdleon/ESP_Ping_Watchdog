@@ -5,6 +5,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266Ping.h>
 #include <ESP8266HTTPClient.h>
+#include <WiFiClientSecureBearSSL.h>
 
 #define ssid "SSID"
 #define password "password"
@@ -19,9 +20,11 @@ bool ult_estado = false;
 String value1;
 String value2;
 String value3;
+// Huella digital de *.ifttt.com expira el 28/09/2020 pero es posible que deje de funcionar antes.
+const uint8_t huellaDigital[20] = {0xaa, 0x75, 0xcb, 0x41, 0x2e, 0xd5, 0xf9, 0x97, 0xff, 0x5d, 0xa0, 0x8b, 0x7d, 0xac, 0x12, 0x21, 0x08, 0x4b, 0x00, 0x8c};
 
 WiFiClient client;
-HTTPClient http;
+HTTPClient https;
 
 void setup() {
   Serial.begin(250000);
@@ -43,6 +46,9 @@ void setup() {
 }
 
 void loop() {
+  std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+  client->setFingerprint(huellaDigital);
+  
   if (WiFi.status() == WL_CONNECTED) {
     WiFi.hostByName(host_remoto, ip_remota); //Resolviendo el host a monitorear a IP
 
@@ -53,27 +59,27 @@ void loop() {
 
     if (Ping.ping(ip_remota) && ult_estado == false) {
       Serial.println("¡¡EXITO!!");
-      http.begin(client, "http://" IFTTT_host "/trigger/" IFTTT_Event "/with/key/" IFTTT_Maker_Key "?value1=" + value1 + "&value2=" + value2 + "&value3=" + value3); //HTTP
-      int httpCode = http.GET();
+      https.begin(*client, "https://" IFTTT_host "/trigger/" IFTTT_Event "/with/key/" IFTTT_Maker_Key "?value1=" + value1 + "&value2=" + value2 + "&value3=" + value3); //https
+      int httpCode = https.GET();
       Serial.println(httpCode);
       if (httpCode == 200) {
         Serial.println("Contactado IFTTT con exito");
       } else {
         Serial.println("Error al contactar con IFTTT :( No internet?");
       }
-      Serial.println(http.getString());
+      Serial.println(https.getString());
       ult_estado = true;
     } else if (Ping.ping(ip_remota) == false && ult_estado == true) {
       Serial.println("Error :(");
-      http.begin(client, "http://" IFTTT_host "/trigger/" IFTTT_Event "/with/key/" IFTTT_Maker_Key "?value1=" + value1 + "&value2=" + value2 + "&value3=" + value3); //HTTP
-      int httpCode = http.GET();
+      https.begin(*client, "https://" IFTTT_host "/trigger/" IFTTT_Event "/with/key/" IFTTT_Maker_Key "?value1=" + value1 + "&value2=" + value2 + "&value3=" + value3); //https
+      int httpCode = https.GET();
       Serial.println(httpCode);
       if (httpCode == 200) {
         Serial.println("Contactado IFTTT con exito");
       } else {
         Serial.println("Error al contactar con IFTTT :( No internet?");
       }
-      Serial.println(http.getString());
+      Serial.println(https.getString());
       ult_estado = false;
     }
     delay(3000);
