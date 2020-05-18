@@ -33,6 +33,7 @@ void setup() {
   //Nos Conectamos a una Red WiFi
   Serial.println("\nConectando a WiFi");
 
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
