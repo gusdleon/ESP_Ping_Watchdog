@@ -12,22 +12,17 @@
 #include <ArduinoOTA.h>
 #include "config.h"
 #include "WebServer.h"
+#include "Notification.h"
 #include "OTA.h"
 
 
 IPAddress ip_remota; //IP a monitorear
-bool ult_estado = false;
 bool FirstRun = true;
 
 
-String value1;
-String value2;
-String value3;
 
 unsigned long previousMillis = 0;
 
-WiFiClient client;
-HTTPClient https;
 
 void setup() {
   Serial.begin(250000);
@@ -56,12 +51,12 @@ void setup() {
 
   if (!MDNS.begin("watchdog")) {
     Serial.println("Error configurando el servidor MDNS!");
-      delay(1000);
-      ESP.restart();
+    delay(1000);
+    ESP.restart();
   }
   Serial.println("Servidor mDNS iniciado");
   MDNS.addService("http", "tcp", 80);
-  
+
   OTA();
 }
 
@@ -69,14 +64,12 @@ void loop() {
   ArduinoOTA.handle();
   server.handleClient();
   MDNS.update();
-  std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-  client->setFingerprint(huellaDigital);
-  
+
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= intervalo || FirstRun == true ) {
     FirstRun = false;
     previousMillis = currentMillis;
-    
+
     if (WiFi.status() == WL_CONNECTED) {
       WiFi.hostByName(host_remoto, ip_remota); //Resolviendo el host a monitorear a IP
 
@@ -85,33 +78,21 @@ void loop() {
       Serial.print(" con ip: ");
       Serial.println(ip_remota);
 
-      if (Ping.ping(ip_remota) && ult_estado == false) {
+      if (Ping.ping(ip_remota)) {
         Serial.println("¡¡EXITO!!");
         value1 = host_remoto;
         value2 = "ONLINE";
-        https.begin(*client, "https://" IFTTT_host "/trigger/" IFTTT_Event "/with/key/" IFTTT_Maker_Key "?value1=" + value1 + "&value2=" + value2 + "&value3=" + value3); //https
-        int httpCode = https.GET();
-        Serial.println(httpCode);
-        if (httpCode == 200) {
-          Serial.println("Contactado IFTTT con exito");
-        } else {
-          Serial.println("Error al contactar con IFTTT :( No internet?");
+        if (ult_estado == false) {
+          sendNotification();
         }
-        Serial.println(https.getString());
         ult_estado = true;
-      } else if (Ping.ping(ip_remota) == false && ult_estado == true) {
+      } else if (!Ping.ping(ip_remota)) {
         Serial.println("Error :(");
         value1 = host_remoto;
         value2 = "OFFLINE";
-        https.begin(*client, "https://" IFTTT_host "/trigger/" IFTTT_Event "/with/key/" IFTTT_Maker_Key "?value1=" + value1 + "&value2=" + value2 + "&value3=" + value3); //https
-        int httpCode = https.GET();
-        Serial.println(httpCode);
-        if (httpCode == 200) {
-          Serial.println("Contactado IFTTT con exito");
-        } else {
-          Serial.println("Error al contactar con IFTTT :( No internet?");
+        if (ult_estado == true) {
+          sendNotification();
         }
-        Serial.println(https.getString());
         ult_estado = false;
       }
     }
