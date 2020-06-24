@@ -10,7 +10,7 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
 #include <ArduinoOTA.h>
-#include "config.h"
+#include "Config.h"
 #include "WebServer.h"
 #include "Notification.h"
 #include "OTA.h"
