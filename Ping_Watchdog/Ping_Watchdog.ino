@@ -10,6 +10,7 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
 #include <ArduinoOTA.h>
+#include "File_System.h"
 #include "Config.h"
 #include "WebServer.h"
 #include "Notification.h"
@@ -20,13 +21,14 @@ IPAddress ip_remota; //IP a monitorear
 bool FirstRun = true;
 
 
-
 unsigned long previousMillis = 0;
 
 
 void setup() {
   Serial.begin(250000);
   delay(10);
+
+  fileSystem.begin();
 
   //Nos Conectamos a una Red WiFi
   Serial.println("\nConectando a WiFi");
@@ -49,7 +51,7 @@ void setup() {
   server.begin();
   Serial.println("Servidor HTTP iniciado");
 
-  if (!MDNS.begin("watchdog")) {
+  if (!MDNS.begin(nombre_mdns)) {
     Serial.println("Error configurando el servidor MDNS!");
     delay(1000);
     ESP.restart();

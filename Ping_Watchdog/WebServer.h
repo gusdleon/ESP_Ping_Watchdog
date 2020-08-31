@@ -1,11 +1,45 @@
 ESP8266WebServer server(80);
 
+String GetContentType(String filename) {
+  if (filename.endsWith(".htm") || filename.endsWith(".html"))return"text/html";
+  else if (filename.endsWith(".css"))return"text/css";
+  else if (filename.endsWith(".js"))return"application/javascript";
+  else if (filename.endsWith(".png"))return"image/png";
+  else if (filename.endsWith(".gif"))return"image/gif";
+  else if (filename.endsWith(".jpg"))return"image/jpeg";
+  else if (filename.endsWith(".ico"))return"image/x-icon";
+  else if (filename.endsWith(".xml"))return"text/xml";
+  else if (filename.endsWith(".pdf"))return"application/x-pdf";
+  else if (filename.endsWith(".zip"))return"application/x-zip";
+  else if (filename.endsWith(".gz"))return"application/x-gzip";
+  else if (filename.endsWith(".mp4"))return"video/mp4";
+  else return"text/plain";
+}
+
 void handleRoot() {
-  server.send(200, "text/plain", "esp8266 Ping Watchdog listo!");
+  Serial.println(server.uri());
+  Serial.println("en Root");
+  File file = fileSystem.open("/index.html", "r");
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
+void handlefile() {
+  Serial.println("en handlefile");
+  File file = fileSystem.open(server.uri(), "r");
+  server.streamFile(file, GetContentType(server.uri()));
+  file.close();
+}
+
+void handledir() {
+  Serial.println("en handledir");
+  File file = fileSystem.open(server.uri() + "/index.html", "r");
+  server.streamFile(file, GetContentType(server.uri() + "/index.html"));
 }
 
 void handleNotFound() {
-  String message = "Archivo no encontrado\n\n";
+  Serial.println("y no existe");
+  String message = "Error 404, Archivo no encontrado\n\n";
   message += "URI: ";
   message += server.uri();
   message += "\nMetodo: ";
@@ -19,7 +53,28 @@ void handleNotFound() {
   server.send(404, "text/plain", message);
 }
 
+void NotFound() {
+  Serial.println(server.uri());
+  Serial.println("en notfound");
+  if (fileSystem.exists(server.uri()) == true) {
+    Serial.println("pero al direccion existe");
+    File file = fileSystem.open(server.uri(), "r");
+    if (file.isFile() == true) {
+      Serial.println("y es un archivo");
+      handlefile();
+    } else if (file.isDirectory() == true && fileSystem.exists(server.uri() + "/index.html") == true) {
+      Serial.println("pero es un directorio, y ese directorio tiene un indext.html, enviando eso");
+      handledir();
+    } else {
+      Serial.println("pero solo la direccion existe... por que?");
+      handleNotFound();
+    }
+  } else {
+    handleNotFound();
+  }
+}
+
 void ServerHandles() {
   server.on("/", handleRoot);
-  server.onNotFound(handleNotFound);
+  server.onNotFound(NotFound);
 }
