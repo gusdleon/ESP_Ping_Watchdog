@@ -5,6 +5,8 @@ char host_remoto[] = "Nombre_De_Host_Remoto_O_IP";
 
 char nombre_mdns[] = "Ping_Watchdog";
 
+byte n_pings = 1; //numero de pings a realizar
+
 #define IFTTT_host "maker.ifttt.com"
 #define IFTTT_Maker_Key "TU_KEY" //Añade tus credenciales de IFTTT, Puedes encontrar tu key en https://ifttt.com/maker_webhooks/settings
 #define IFTTT_Event "TU_EVENTO" //Añade el nombre de tu evento, para esto tendras que haber creado primero un Applet en IFTTT con el Trigger Webhooks

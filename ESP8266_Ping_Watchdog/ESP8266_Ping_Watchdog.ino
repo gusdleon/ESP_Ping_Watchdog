@@ -80,7 +80,7 @@ void loop() {
       Serial.print(" con ip: ");
       Serial.println(ip_remota);
 
-      if (Ping.ping(ip_remota)) {
+      if (Ping.ping(ip_remota, n_pings)) {
         Serial.println("¡¡EXITO!!");
         value1 = host_remoto;
         value2 = "ONLINE";
@@ -88,7 +88,7 @@ void loop() {
           sendNotification();
         }
         ult_estado = true;
-      } else if (!Ping.ping(ip_remota)) {
+      } else if (!Ping.ping(ip_remota, n_pings)) {
         Serial.println("Error :(");
         value1 = host_remoto;
         value2 = "OFFLINE";
